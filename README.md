@@ -2,23 +2,22 @@
 rancher-haproxy
 ==============
 
-This image is the haproxy dynamic conf for rancher. It comes from [rawmind/rancher-tools][rancher-tools].
+Haproxy dynamic configuration (confd) for Rancher. From [rawmind/rancher-tools][rancher-tools].
 
 ## Build
 
 ```
-docker build -t rawmind/rancher-haproxy:<version> .
+docker build -t interlegis/rancher-haproxy:<version> .
 ```
 
 ## Versions
 
-- `0.0.1` [(Dockerfile)](https://github.com/interlegis/rancher-haproxy/blob/Dockerfile)
+- `0.0.1` [(Dockerfile)](https://github.com/interlegis/rancher-haproxy/blob/master/Dockerfile)
 
 
 ## Usage
 
-This image has to be run as a sidekick of [rawmind/alpine-haproxy][alpine-haproxy], and makes available /opt/tools volume. It scans from rancher-metadata, for a services that has haproxy labels, and generates haproxy frontend and backends to expose the services.
-
+This image has to be run as a sidekick of [rawmind/alpine-haproxy][alpine-haproxy], making available /opt/tools volume. It scans rancher-metadata for a services that has haproxy labels, and generates haproxy frontend and backends to expose the services in TCP mode, supporting SSL/TLS pass-through and hostnames via SNI.
 
 ## Configuration labels
 
