@@ -1,9 +1,0 @@
-[template]
-src = "haproxy.cfg.tmpl"
-dest = "/opt/haproxy/etc/haproxy.cfg"
-owner = "haproxy"
-mode = "0644"
-keys = [
-  "/stacks",
-]
-

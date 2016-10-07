@@ -1,36 +1,3 @@
-global
-    log 127.0.0.1 local0
-    log 127.0.0.1 local1 notice
-    maxconn 2048
-    maxpipes 1024
-    tune.ssl.default-dh-param 2048
-    ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES25
-    ssl-default-server-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES
-    ssl-default-bind-options no-sslv3 no-tlsv10
-    daemon
-
-defaults
-    log     global
-    mode    tcp
-    option  tcplog
-    option  dontlognull
-    option  redispatch
-    option  http-server-close
-    option  forwardfor
-    retries 3
-    timeout connect 5000
-    timeout client 50000
-    timeout server 50000
-
-listen stats            
-    bind 0.0.0.0:8000 #Listen on localhost port 9000
-    mode http           
-    stats enable #Enable statistics
-    stats hide-version #Hide HAPRoxy version, a necessity for any public-facing site
-    stats realm Haproxy\ Statistics #Show this text in authentication popup (escape space characters w
-    stats uri /haproxy_stats #The URI of the stats page, in this case localhost:9000/haproxy_stats
-
-
 frontend https-in  
   mode tcp
   bind *:443

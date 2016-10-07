@@ -1,0 +1,10 @@
+[template]
+src = "frontends.cfg.tmpl"
+dest = "/opt/haproxy/etc/conf.d/frontends.cfg"
+owner = "haproxy"
+mode = "0644"
+keys = [
+  "/stacks",
+]
+
+reload_cmd = "/opt/haproxy/bin/haproxy-service.sh start"
