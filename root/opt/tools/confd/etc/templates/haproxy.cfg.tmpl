@@ -1,0 +1,60 @@
+global
+    log 127.0.0.1 local0
+    log 127.0.0.1 local1 notice
+    maxconn 2048
+    maxpipes 1024
+    tune.ssl.default-dh-param 2048
+    ssl-default-bind-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES25
+    ssl-default-server-ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES
+    ssl-default-bind-options no-sslv3 no-tlsv10
+    daemon
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    option  redispatch
+    option  http-server-close
+    option  forwardfor
+    retries 3
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+
+listen stats            
+    bind 0.0.0.0:8000 #Listen on localhost port 9000
+    mode http           
+    stats enable #Enable statistics
+    stats hide-version #Hide HAPRoxy version, a necessity for any public-facing site
+    stats realm Haproxy\ Statistics #Show this text in authentication popup (escape space characters w
+    stats uri /haproxy_stats #The URI of the stats page, in this case localhost:9000/haproxy_stats
+
+
+frontend https-in  
+  mode tcp
+  bind *:443
+  
+  option socket-stats
+  tcp-request inspect-delay 5s
+  tcp-request content accept if { req_ssl_hello_type 1 }
+
+
+{{- range $s, $stack_name := ls "/stacks" -}}
+  {{- range $i, $service_name := ls (printf "/stacks/%s/services" $stack_name) -}}
+    {{- if exists (printf "/stacks/%s/services/%s/labels/haproxy.enable" $stack_name $service_name) -}}
+      {{- $haproxy_enable := getv (printf "/stacks/%s/services/%s/labels/haproxy.enable" $stack_name $service_name) -}}
+      {{- if eq $haproxy_enable "true"}}
+        {{- range $i2, $container := ls (printf "/stacks/%s/services/%s/containers" $stack_name $service_name) -}}
+          {{- $back_status := getv (printf "/stacks/%s/services/%s/containers/%s/health_state" $stack_name $service_name $container) -}}
+          {{- if eq $back_status "healthy" }}
+            {{- if exists (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name) -}}
+              {{- $haproxy_publish := getv (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name) -}}
+  use_backend {{$service_name}}_{{$stack_name}} if { req_ssl_sni -i {{$haproxy_publish}} }
+            {{- end -}}"
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end}}
