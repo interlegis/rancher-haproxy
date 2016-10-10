@@ -1,6 +1,6 @@
 [template]
-src = "frontends.cfg.tmpl"
-dest = "/opt/haproxy/etc/conf.d/frontends.cfg"
+src = "10-frontends.cfg.tmpl"
+dest = "/opt/haproxy/etc/conf.d/10-frontends.cfg"
 owner = "haproxy"
 mode = "0644"
 keys = [
