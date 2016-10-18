@@ -1,6 +1,6 @@
 frontend https-in  
   mode tcp
-  bind *:443
+  bind *:2%port%
   
   option socket-stats
   tcp-request inspect-delay 5s
@@ -18,7 +18,7 @@ frontend https-in
               {{- $haproxy_publish := split (getv (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name)) ":" -}}
               {{- $haproxy_host := index $haproxy_publish 0 }}
               {{- $haproxy_port := index $haproxy_publish 1 }}
-              {{- if $haproxy_port eq 443 -}}
+              {{- if $haproxy_port eq %port% -}}
                 {{ if $haproxy_host eq "*" }}
   use_backend {{$service_name}}_{{$stack_name}}
                 {{ else }}
