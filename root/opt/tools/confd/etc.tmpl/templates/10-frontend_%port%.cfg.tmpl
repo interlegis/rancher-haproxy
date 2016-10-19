@@ -1,10 +1,8 @@
-frontend https-in  
+frontend port-%port%-in  
   mode tcp
   bind *:%porthigh%
   
   option socket-stats
-  tcp-request inspect-delay 5s
-  tcp-request content accept if { req_ssl_hello_type 1 }
 
 {{ range $s, $stack_name := ls "/stacks" }}
   {{- range $i, $service_name := ls (printf "/stacks/%s/services" $stack_name) -}}
@@ -16,16 +14,16 @@ frontend https-in
           {{- if eq $back_status "healthy" }}
             {{- if exists (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name) -}}
               {{- $haproxy_publish := split (getv (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name)) ":" -}}
-              {{- $haproxy_host := index $haproxy_publish 0 }}
-              {{- $haproxy_port := index $haproxy_publish 1 }}
-              {{- if $haproxy_port eq %port% -}}
-                {{ if $haproxy_host eq "*" }}
+              {{- $haproxy_host := index $haproxy_publish 0 -}}
+              {{- $haproxy_port := index $haproxy_publish 1 -}}
+              {{- if eq $haproxy_port "%port%" -}}
+                {{- if eq $haproxy_host "*" -}}
   use_backend {{$service_name}}_{{$stack_name}}
-                {{ else }}
+                {{- else -}}
   use_backend {{$service_name}}_{{$stack_name}} if { req_ssl_sni -i {{$haproxy_host}} }
-                {{ end }}
-              {{ end }}
-            {{- end -}}"
+                {{- end -}}
+              {{- end -}}
+            {{- end -}}
           {{- end -}}
         {{- end -}}
       {{- end -}}
