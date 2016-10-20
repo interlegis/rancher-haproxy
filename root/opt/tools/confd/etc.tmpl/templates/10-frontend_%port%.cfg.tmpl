@@ -3,6 +3,12 @@ frontend port-%port%-in
   bind *:%porthigh%
   
   option socket-stats
+  tcp-request inspect-delay 5s
+{{- $ssl_enable := "%ssl%" -}}
+{{- if eq $ssl_enable "true" }}
+
+  tcp-request content accept if { req_ssl_hello_type 1 }
+{{- end -}}
 
 {{ range $s, $stack_name := ls "/stacks" }}
   {{- range $i, $service_name := ls (printf "/stacks/%s/services" $stack_name) -}}
@@ -13,14 +19,16 @@ frontend port-%port%-in
           {{- $back_status := getv (printf "/stacks/%s/services/%s/containers/%s/health_state" $stack_name $service_name $container) -}}
           {{- if eq $back_status "healthy" }}
             {{- if exists (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name) -}}
-              {{- $haproxy_publish := split (getv (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name)) ":" -}}
-              {{- $haproxy_host := index $haproxy_publish 0 -}}
-              {{- $haproxy_port := index $haproxy_publish 1 -}}
-              {{- if eq $haproxy_port "%port%" -}}
-                {{- if eq $haproxy_host "*" -}}
+              {{- range $i3, $publish_socket := split (getv (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name)) ", " -}}
+                {{- $publish_a := split $publish_socket ":" -}}
+                {{- $haproxy_host := index $publish_a 0 -}}
+                {{- $haproxy_port := index $publish_a 1 -}}
+                {{- if eq $haproxy_port "%port%" -}}
+                  {{- if eq $haproxy_host "*" -}}
   use_backend {{$service_name}}_{{$stack_name}}
-                {{- else -}}
+                  {{- else -}}
   use_backend {{$service_name}}_{{$stack_name}} if { req_ssl_sni -i {{$haproxy_host}} }
+                  {{- end -}}
                 {{- end -}}
               {{- end -}}
             {{- end -}}
@@ -31,6 +39,7 @@ frontend port-%port%-in
   {{- end -}}
 {{- end}}
 
+
 {{ range $s, $stack_name := ls "/stacks" }}
   {{- range $i, $service_name := ls (printf "/stacks/%s/services" $stack_name) -}}
     {{- if exists (printf "/stacks/%s/services/%s/labels/haproxy.enable" $stack_name $service_name) -}}
@@ -40,13 +49,33 @@ frontend port-%port%-in
           {{- $back_status := getv (printf "/stacks/%s/services/%s/containers/%s/health_state" $stack_name $service_name $container) -}}
           {{- if eq $back_status "healthy" }}
             {{- if exists (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name) }}
-  backend {{$service_name}}_{{$stack_name}}
+backend {{$service_name}}_{{$stack_name}}
   balance leastconn
   mode tcp
+              {{- if eq $ssl_enable "true" }}
 
+  # maximum SSL session ID length is 32 bytes.
+  stick-table type binary len 32 size 30k expire 30m
+
+  acl clienthello req_ssl_hello_type 1
+  acl serverhello rep_ssl_hello_type 2
+
+  # use tcp content accepts to detects ssl client and server hello.
+  tcp-request inspect-delay 5s
+  tcp-request content accept if clienthello
+
+  # no timeout on response inspect delay by default.
+  tcp-response content accept if serverhello
+
+  stick on payload_lv(43,1) if clienthello
+
+  # Learn on response if server hello.
+  stick store-response payload_lv(43,1) if serverhello
+
+  option ssl-hello-chk
+              {{- end }}
   option log-health-checks
   option tcp-check
-
               {{- range $i3, $publish_socket := split (getv (printf "/stacks/%s/services/%s/labels/haproxy.publish" $stack_name $service_name)) ", " -}}
                 {{- $publish_a := split $publish_socket ":" -}}
                 {{- $haproxy_host := index $publish_a 0 -}}
@@ -63,4 +92,3 @@ frontend port-%port%-in
     {{- end -}}
   {{- end -}}
 {{- end}}
-
