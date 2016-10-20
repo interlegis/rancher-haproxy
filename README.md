@@ -23,10 +23,16 @@ This image has to be run as a sidekick of [rawmind/alpine-haproxy][alpine-haprox
 
 Haproxy labels, has to be created in your service, in order to get included in haproxy dynamic config. 
 
-- haproxy.enable = true # Enable or not haproxy publication
+- haproxy.enable = true # Enable haproxy publication
 - haproxy.publish = < domain.name >:< port > # Domain and port to publish. Multiple domains separated by ","
 
 WARNING: Only services with healthy state are added to haproxy, so health checks are mandatory.
+
+## Docker-compose and Rancher-compose example
+
+See rancher folder.
+
+## References 
 
 [alpine-haproxy]: https://github.com/rawmind0/alpine-haproxy
 [rancher-tools]: https://github.com/rawmind0/rancher-tools
