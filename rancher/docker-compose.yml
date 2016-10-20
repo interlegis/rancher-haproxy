@@ -1,0 +1,28 @@
+haproxy:
+  log_driver: ''
+  ports:
+    - 8000:8000/tcp
+    - 443:20443/tcp
+    - 993:20993/tcp
+    - 587:20587/tcp
+  labels:
+    io.rancher.sidekicks: haproxy-conf
+  tty: true
+  image: interlegis/alpine-haproxy
+  environment:
+    - CONF_INTERVAL=60
+  volumes_from:
+    - haproxy-conf
+
+haproxy-conf:
+  log_driver: ''
+  labels:
+    io.rancher.container.start_once: 'true'
+  tty: true
+  log_opt: {}
+  image: interlegis/rancher-haproxy
+  net: none
+  environment:
+    HAPROXY_PORTS: 443-ssl 993-ssl 587-ssl
+  volumes:
+    - /opt/tools
