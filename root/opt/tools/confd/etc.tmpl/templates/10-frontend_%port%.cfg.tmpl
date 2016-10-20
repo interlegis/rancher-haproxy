@@ -25,9 +25,9 @@ frontend port-%port%-in
                 {{- $haproxy_port := index $publish_a 1 -}}
                 {{- if eq $haproxy_port "%port%" -}}
                   {{- if eq $haproxy_host "*" }}
-  use_backend {{$service_name}}_{{$stack_name}}
+  use_backend {{$service_name}}_{{$stack_name}}_port_%port%
                   {{- else }}
-  use_backend {{$service_name}}_{{$stack_name}} if { req_ssl_sni -i {{$haproxy_host}} }
+  use_backend {{$service_name}}_{{$stack_name}}_port_%port% if { req_ssl_sni -i {{$haproxy_host}} }
                   {{- end -}}
                 {{- end -}}
               {{- end -}}
@@ -38,8 +38,6 @@ frontend port-%port%-in
     {{- end -}}
   {{- end -}}
 {{- end}}
-
-
 {{ range $s, $stack_name := ls "/stacks" }}
   {{- range $i, $service_name := ls (printf "/stacks/%s/services" $stack_name) -}}
     {{- if exists (printf "/stacks/%s/services/%s/labels/haproxy.enable" $stack_name $service_name) -}}
@@ -59,7 +57,7 @@ frontend port-%port%-in
                   {{- if eq $first_port "true" -}}
                     {{- $first_port := "false" }}
 
-backend {{$service_name}}_{{$stack_name}}
+backend {{$service_name}}_{{$stack_name}}_port_%port%
   balance leastconn
   mode tcp
                     {{- if eq $ssl_enable "true" }}
